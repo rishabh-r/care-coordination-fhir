@@ -1,10 +1,15 @@
 import PriorityBadge from './PriorityBadge';
 
-export default function PatientHeaderCard({ patient, conditions }) {
+export default function PatientHeaderCard({ patient, conditions, medications, observations }) {
   if (!patient) return null;
 
   const activeConditions = conditions.filter(c => c.clinicalStatus === 'active');
   const programs = activeConditions.slice(0, 3).map(c => c.name).join(', ');
+
+  // Derive badges from data
+  const stoppedMeds = (medications || []).filter(m => m.status === 'on-hold' || m.status === 'stopped');
+  const hasCareGap = activeConditions.length > 0;
+  const hasHighPriority = stoppedMeds.length > 0 || activeConditions.length >= 3;
 
   return (
     <div className="p360-card p360-header-card">
@@ -14,11 +19,11 @@ export default function PatientHeaderCard({ patient, conditions }) {
           <div className="p360-header-info">
             <div className="p360-header-name-row">
               <h2 className="p360-patient-name">{patient.fullName}</h2>
-              <PriorityBadge level="high" label="High Priority" />
-              <PriorityBadge level="medium" label="Care Gap" />
+              {hasHighPriority && <PriorityBadge level="high" label="High Priority" />}
+              {hasCareGap && <PriorityBadge level="medium" label="Care Gap" />}
             </div>
             <p className="p360-demo-line">
-              {patient.age ? `${patient.age} yrs` : ''} &middot; {patient.gender} &middot; MRN: MRN-{patient.mrn} &middot; Programs: {programs || 'N/A'} &middot; Score: 32% ASCVD
+              {patient.age ? `${patient.age} yrs` : ''} &middot; {patient.gender} &middot; MRN: MRN-{patient.mrn} &middot; Programs: {programs || 'N/A'}
             </p>
           </div>
         </div>

@@ -79,8 +79,8 @@ export default function Patient360Page() {
       <div className="p360-grid">
         {/* Left column (main content) */}
         <div className="p360-main">
-          <PatientHeaderCard patient={patient} conditions={conditions} />
-          <AlertTriggersCard observations={observations} />
+          <PatientHeaderCard patient={patient} conditions={conditions} medications={medications} observations={observations} />
+          <AlertTriggersCard observations={observations} medications={medications} encounters={encounters} />
           <TabsSection />
           <VitalsSection observations={observations} />
           <MedicationsSection medications={medications} />

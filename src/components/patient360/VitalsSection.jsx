@@ -42,11 +42,20 @@ export default function VitalsSection({ observations }) {
 
   const bpValue = sys.value && dia.value ? `${sys.value}/${dia.value}` : sys.value || '—';
 
+  // Find most recent observation date across all vitals
+  const allDates = [sys.date, dia.date, hr.date, gluc.date, temp.date].filter(Boolean);
+  let lastUpdated = 'N/A';
+  if (allDates.length > 0) {
+    const latest = allDates.sort((a, b) => new Date(b) - new Date(a))[0];
+    const d = new Date(latest);
+    lastUpdated = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
   return (
     <div className="p360-card">
       <div className="p360-section-header">
         <h3>Vitals</h3>
-        <span className="p360-section-sub">Last updated: Today, 9:30 AM</span>
+        <span className="p360-section-sub">Last updated: {lastUpdated}</span>
       </div>
       <div className="p360-vitals-grid">
         <VitalCard label="Blood Pressure" value={bpValue} unit="mmHg" normalLow={90} normalHigh={120} normalLabel="120/80" />
