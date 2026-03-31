@@ -23,26 +23,27 @@ export default function AlertTriggersCard({ observations, medications, encounter
     }
   }
 
-  // 2. Medication non-adherence — find stopped/on-hold meds
+  // 2. Medication non-adherence — find stopped/on-hold meds, deduplicate names
   const gapMeds = (medications || []).filter(m => m.status === 'on-hold' || m.status === 'stopped');
   if (gapMeds.length > 0) {
-    const medNames = gapMeds.slice(0, 2).map(m => m.name).join(', ');
+    const uniqueNames = [...new Set(gapMeds.map(m => m.name).filter(Boolean))];
+    const medNames = uniqueNames.slice(0, 3).join(', ');
+    const uniqueCount = uniqueNames.length;
     alerts.push({
       icon: '\uD83D\uDC8A',
       iconClass: 'p360-alert-high',
       title: 'Medication Non-Adherence',
-      detail: `${gapMeds.length} medication(s) stopped/on-hold: ${medNames}`,
+      detail: `${uniqueCount} medication(s) stopped/on-hold: ${medNames}`,
       level: 'high',
       label: 'High Priority',
     });
   }
 
-  // 3. Missed appointments — find encounters with NO SHOW
-  const allEncounters = [
+  // 3. Missed appointments — find encounters with NO SHOW (use startDate not date)
+  const allEncounters = (encounters?.all || [
     ...(encounters?.upcoming || []),
     ...(encounters?.recent || []),
-    ...(encounters?.all || []),
-  ];
+  ]);
   const missed = allEncounters.filter(e =>
     (e.location || '').toLowerCase().includes('no show') ||
     (e.status || '').toLowerCase() === 'cancelled'
@@ -53,7 +54,7 @@ export default function AlertTriggersCard({ observations, medications, encounter
       icon: '\uD83D\uDCC5',
       iconClass: 'p360-alert-medium',
       title: 'Missed Appointments',
-      detail: `${latest.reason || latest.classDisplay || 'Appointment'} (${latest.date || 'N/A'})`,
+      detail: `${latest.reason || latest.classDisplay || 'Appointment'} (${latest.startDate || 'N/A'})`,
       level: 'medium',
       label: 'Medium',
     });
@@ -107,8 +108,8 @@ export default function AlertTriggersCard({ observations, medications, encounter
           <span>BP Trend: <strong style={{ color: bpTrend && bpTrend.diff > 0 ? '#ef4444' : '#22c55e' }}>
             {bpTrend ? `${bpTrend.diff > 0 ? '+' : ''}${bpTrend.diff} mmHg` : bpStr !== '—' ? bpStr + ' mmHg' : '—'}
           </strong></span>
-          <span>HbA1c: <strong style={{ color: latestHba1c && parseFloat(latestHba1c.value) >= 7 ? '#ef4444' : '#1e293b' }}>
-            {latestHba1c ? `${latestHba1c.value}% (Target <7)` : '—'}
+          <span>HbA1c: <strong style={{ color: latestHba1c?.value && parseFloat(latestHba1c.value) >= 7 ? '#ef4444' : '#1e293b' }}>
+            {latestHba1c?.value ? `${latestHba1c.value}% (Target <7)` : '—'}
           </strong></span>
           <span>LDL: <strong>
             {latestLdl ? `${latestLdl.value} mg/dL` : '—'}

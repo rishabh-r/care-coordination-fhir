@@ -1,4 +1,4 @@
-// LOINC codes for key vitals
+// LOINC codes for key vitals (multiple codes per vital to handle API variants)
 const VITAL_LOINC = {
   '8480-6': 'systolicBP',
   '8462-4': 'diastolicBP',
@@ -6,9 +6,15 @@ const VITAL_LOINC = {
   '2345-7': 'glucose',
   '8310-5': 'temperature',
   '4548-4': 'hba1c',
+  '17856-6': 'hba1c',  // HbA1c alternative code
+  '41995-2': 'hba1c',  // HbA1c alternative code
   '2090-9': 'ldl',
+  '13457-7': 'ldl',    // LDL alternative code
+  '18262-6': 'ldl',    // LDL alternative code
   '718-7': 'hemoglobin',
   '2160-0': 'creatinine',
+  '2823-3': 'potassium',
+  '2951-2': 'sodium',
 };
 
 const VITAL_NORMAL_RANGES = {
@@ -33,7 +39,9 @@ export function parsePatientDemographics(bundle) {
   const fullName = [given, family].filter(Boolean).join(' ');
 
   const birthDate = resource.birthDate || '';
-  const age = birthDate ? Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+  const ageRaw = birthDate ? Math.floor((Date.now() - new Date(birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)) : null;
+  // Guard against future birthdates in test data (negative age) or unrealistic values
+  const age = ageRaw !== null && ageRaw >= 0 && ageRaw <= 150 ? ageRaw : null;
 
   const gender = resource.gender || '';
 
@@ -67,8 +75,11 @@ export function parseConditions(bundle) {
   return entries.map(entry => {
     const r = entry.resource;
     if (!r) return null;
+    const rawName = r.code?.coding?.[0]?.display || r.code?.text || '';
+    // If name is a pure numeric code (SNOMED stored without display), use text description fallbacks
+    const name = rawName && !/^\d+$/.test(rawName.trim()) ? rawName : (r.code?.coding?.[0]?.code ? `Condition (${r.code.coding[0].code})` : 'Unknown');
     return {
-      name: r.code?.coding?.[0]?.display || r.code?.text || 'Unknown',
+      name,
       code: r.code?.coding?.[0]?.code || '',
       system: r.code?.coding?.[0]?.system || '',
       clinicalStatus: r.clinicalStatus?.coding?.[0]?.code || '',
@@ -90,7 +101,11 @@ export function parseObservations(bundle) {
     const vitalKey = VITAL_LOINC[code];
     const display = r.code?.coding?.[0]?.display || r.code?.text || 'Unknown';
 
-    const value = r.valueQuantity?.value ?? r.valueString ?? '';
+    // Use valueQuantity.value if present, else valueString, else skip
+    const rawValue = r.valueQuantity?.value !== undefined ? r.valueQuantity.value : (r.valueString ?? null);
+    if (rawValue === null || rawValue === '') return; // skip observations with no value
+
+    const value = String(rawValue);
     const unit = r.valueQuantity?.unit || r.valueQuantity?.code || '';
     const date = r.effectiveDateTime || r.issued || '';
     const interpretation = r.interpretation?.[0]?.coding?.[0]?.display
