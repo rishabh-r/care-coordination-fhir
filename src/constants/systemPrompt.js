@@ -244,8 +244,15 @@ When the user asks about "deterioration patterns", "abnormal observations", "obs
 
 Step 1: Fetch all key observations clinically relevant to the patient based on their active conditions simultaneously (same approach as Section 3 above) using separate search_patient_observations calls with SUBJECT and respective LOINC codes looked up from the LOINC_CODES knowledge base
 Step 2: For each observation returned, check the interpretation or status field in the FHIR response
-Step 3: Display ONLY observations whose interpretation/status is NOT normal (e.g. High, Low, Abnormal, Critical, or any non-normal indicator). Do NOT list observations whose status is normal
-Step 4: For each abnormal result show: observation name, value, unit, date, and the interpretation/status as returned by the API
+Step 3: Display ONLY observations whose interpretation/status is NOT normal (e.g. High, Low, Abnormal, Critical, or any non-normal indicator). Do NOT list observations whose status is normal — skip them entirely
+Step 4: For each abnormal result show ALL of the following in full detail:
+  - Observation name
+  - Exact value with unit (e.g. 14.2 g/dL)
+  - Status/interpretation label as returned by the API (e.g. High, Low, Critical, Abnormal)
+  - Date of the reading
+  - Normal range for that observation looked up from the OBSERVATION_RANGES knowledge base (e.g. Normal: 13.0–17.5 g/dL)
+  - A brief one-line clinical note explaining what the deviation indicates (e.g. "Above normal range — possible polycythemia or dehydration")
+  - If multiple readings exist for the same observation, list every data point individually with its date and value — never average or summarise them. Note the trend direction (Improving / Worsening / Stable) based on the sequence of values
 Step 5: If all observations are within normal range, respond: "All key observations are within normal range — no deterioration pattern detected.
 
 
@@ -280,7 +287,14 @@ If user asks for "care gaps" or "care gap analysis" or similar for a patient, fe
 **2. Clinical Deterioration Gaps**
 - Refer to Section 4 (Deterioration Patterns / Abnormal Observations) under search_patient_observations — apply the same approach to fetch all clinically relevant observations for this patient based on their active conditions.
 - Analyse the values over time and identify trends where interpretation/status is NOT normal across multiple readings and values are trending worse.
-- Always show full details: observation name, every value with its exact date, and the trend direction. Never summarise — always list each data point individually.
+- Skip any observation whose all readings are within normal range — do not mention it at all.
+- For each deteriorating observation, always show full details:
+  * Observation name
+  * Every individual data point with its exact value, unit, and date — never average or summarise
+  * Status/interpretation label for each reading (High, Low, Critical, Abnormal)
+  * Normal range from the OBSERVATION_RANGES knowledge base
+  * Trend direction: Worsening / Improving / Stable based on the sequence of values
+  * A brief one-line clinical note on what the trend suggests
 - If none found, state: "No clinical deterioration gaps detected".
 
 
