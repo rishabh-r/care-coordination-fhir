@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
@@ -13,9 +13,22 @@ function ProtectedRoute({ loggedIn, children }) {
 }
 
 export default function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
-  const [userName, setUserName] = useState('');
-  const [userInitial, setUserInitial] = useState('U');
+  // Initialize auth synchronously from localStorage — prevents redirect flash on new tab
+  const [loggedIn, setLoggedIn] = useState(() => {
+    return !!(localStorage.getItem("cb_token") && localStorage.getItem("cb_user"));
+  });
+  const [userName, setUserName] = useState(() => {
+    const saved = localStorage.getItem("cb_user");
+    return saved ? formatDisplayName(saved) : '';
+  });
+  const [userInitial, setUserInitial] = useState(() => {
+    const saved = localStorage.getItem("cb_user");
+    if (saved) {
+      const name = formatDisplayName(saved);
+      return name.charAt(0).toUpperCase();
+    }
+    return 'U';
+  });
   const navigate = useNavigate();
 
   const {
@@ -28,18 +41,6 @@ export default function App() {
     clearChat,
     currentPatient,
   } = useChat();
-
-  // Auto-login check on mount
-  useEffect(() => {
-    const savedToken = localStorage.getItem("cb_token");
-    const savedUser  = localStorage.getItem("cb_user");
-    if (savedToken && savedUser) {
-      const displayName = formatDisplayName(savedUser);
-      setUserName(displayName);
-      setUserInitial(displayName.charAt(0).toUpperCase());
-      setLoggedIn(true);
-    }
-  }, []);
 
   const handleLoginSuccess = (name) => {
     const displayName = formatDisplayName(name);
