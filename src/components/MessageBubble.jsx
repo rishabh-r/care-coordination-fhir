@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Chart } from 'chart.js/auto';
 import { simpleMarkdown } from '../utils/markdown';
 import { extractChartData } from '../utils/chart';
 import { formatTime } from '../utils/formatters';
 
-export default function MessageBubble({ role, text, userInitial, isStreaming, userMessage }) {
+export default function MessageBubble({ role, text, userInitial, isStreaming, userMessage, currentPatient }) {
+  const navigate = useNavigate();
   const isBot = role === "bot";
   const chartRef = useRef(null);
   const chartInstanceRef = useRef(null);
@@ -89,7 +91,10 @@ export default function MessageBubble({ role, text, userInitial, isStreaming, us
                   }}
                   onMouseEnter={(e) => { e.target.style.background = '#0d9488'; e.target.style.color = '#fff'; }}
                   onMouseLeave={(e) => { e.target.style.background = 'transparent'; e.target.style.color = '#0d9488'; }}
-                  onClick={() => window.open("https://hull-act-74080093.figma.site/care-manager/P-001", "_blank")}
+                  onClick={() => {
+                    const patientId = currentPatient?.id || 'unknown';
+                    navigate(`/patient/${patientId}`, { state: { careGapAnalysis: text } });
+                  }}
                 >
                   Launch CareCord AI
                 </button>

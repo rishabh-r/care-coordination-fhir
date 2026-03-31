@@ -220,5 +220,6 @@ export default function useChat() {
     handleSend,
     handleChipSelect,
     clearChat,
+    currentPatient: currentPatientRef,
   };
 }

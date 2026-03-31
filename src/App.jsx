@@ -1,14 +1,22 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
 import ChatWidget from './components/ChatWidget';
+import Patient360Page from './components/patient360/Patient360Page';
 import { formatDisplayName } from './utils/formatters';
 import useChat from './hooks/useChat';
+
+function ProtectedRoute({ loggedIn, children }) {
+  if (!loggedIn) return <Navigate to="/login" replace />;
+  return children;
+}
 
 export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [userName, setUserName] = useState('');
   const [userInitial, setUserInitial] = useState('U');
+  const navigate = useNavigate();
 
   const {
     messages,
@@ -18,6 +26,7 @@ export default function App() {
     handleSend,
     handleChipSelect,
     clearChat,
+    currentPatient,
   } = useChat();
 
   // Auto-login check on mount
@@ -37,6 +46,7 @@ export default function App() {
     setUserName(displayName);
     setUserInitial(displayName.charAt(0).toUpperCase());
     setLoggedIn(true);
+    navigate('/');
   };
 
   const handleLogout = () => {
@@ -46,26 +56,40 @@ export default function App() {
     setLoggedIn(false);
     setUserName('');
     setUserInitial('U');
+    navigate('/login');
   };
 
-  if (!loggedIn) {
-    return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
-  }
+  const chatWidgetProps = {
+    messages,
+    isTyping,
+    rateLimitMessage,
+    isBotResponding,
+    onSend: handleSend,
+    onChipSelect: handleChipSelect,
+    onClearChat: clearChat,
+    userName,
+    userInitial,
+    currentPatient: currentPatient.current,
+  };
 
   return (
-    <>
-      <HomeScreen onLogout={handleLogout} />
-      <ChatWidget
-        messages={messages}
-        isTyping={isTyping}
-        rateLimitMessage={rateLimitMessage}
-        isBotResponding={isBotResponding}
-        onSend={handleSend}
-        onChipSelect={handleChipSelect}
-        onClearChat={clearChat}
-        userName={userName}
-        userInitial={userInitial}
-      />
-    </>
+    <Routes>
+      <Route path="/login" element={
+        loggedIn ? <Navigate to="/" replace /> : <LoginScreen onLoginSuccess={handleLoginSuccess} />
+      } />
+      <Route path="/" element={
+        <ProtectedRoute loggedIn={loggedIn}>
+          <HomeScreen onLogout={handleLogout} />
+          <ChatWidget {...chatWidgetProps} />
+        </ProtectedRoute>
+      } />
+      <Route path="/patient/:id" element={
+        <ProtectedRoute loggedIn={loggedIn}>
+          <Patient360Page />
+          <ChatWidget {...chatWidgetProps} />
+        </ProtectedRoute>
+      } />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

@@ -11,6 +11,7 @@ export default function ChatWidget({
   onClearChat,
   userName,
   userInitial,
+  currentPatient,
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
 
@@ -31,6 +32,7 @@ export default function ChatWidget({
         onChipSelect={onChipSelect}
         userName={userName}
         userInitial={userInitial}
+        currentPatient={currentPatient}
       />
 
       {/* Floating Toggle Button */}

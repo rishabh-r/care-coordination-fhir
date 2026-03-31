@@ -16,6 +16,7 @@ export default function ChatPanel({
   onChipSelect,
   userName,
   userInitial,
+  currentPatient,
 }) {
   const messagesRef = useRef(null);
 
@@ -69,6 +70,7 @@ export default function ChatPanel({
               userInitial={userInitial}
               isStreaming={msg.isStreaming}
               userMessage={msg.userMessage}
+              currentPatient={currentPatient}
             />
           ))
         )}
