@@ -35,13 +35,12 @@ export default function ChatInputBar({ onSend, onChipSelect, isBotResponding }) 
         <textarea
           ref={textareaRef}
           id="user-input"
-          placeholder={isBotResponding ? "CareBridge is responding..." : "Ask about patient records, labs..."}
+          placeholder="Ask about patient records, labs..."
           rows="1"
           maxLength="2000"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
-          disabled={isBotResponding}
         />
         <PredefinedDropdown onSelect={onChipSelect} disabled={isBotResponding} />
         <button
